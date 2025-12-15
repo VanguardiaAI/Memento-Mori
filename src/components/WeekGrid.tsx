@@ -335,6 +335,7 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
                         onTouchEnd={(e) => {
                           // Only show tooltip on tap, not after drag
                           if (!isDragging) {
+                            e.preventDefault(); // Prevent onClick from firing after touchEnd
                             handleWeekClick(week, e);
                           }
                         }}
