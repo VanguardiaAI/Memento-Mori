@@ -1,18 +1,19 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Memento Mori",
-  description: "A Progressive Web App to remind you of life's brevity",
+  title: "Memento Mori - Visualiza tu vida en semanas",
+  description: "Una herramienta contemplativa que visualiza las 4,160 semanas de una vida de 80 años. Recuerda que el tiempo es finito.",
   manifest: "/manifest.json",
-  themeColor: "#000000",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
+  applicationName: "Memento Mori",
+  keywords: ["memento mori", "vida", "tiempo", "semanas", "reflexión", "mindfulness"],
+  authors: [{ name: "Memento Mori" }],
+  creator: "Memento Mori",
+  publisher: "Memento Mori",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
   },
   icons: {
     icon: [
@@ -22,7 +23,32 @@ export const metadata: Metadata = {
     apple: [
       { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
+    shortcut: "/icon-192x192.png",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Memento Mori",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Memento Mori",
+    title: "Memento Mori - Visualiza tu vida en semanas",
+    description: "Una herramienta contemplativa que visualiza las 4,160 semanas de una vida de 80 años.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Memento Mori",
+    description: "Visualiza las semanas de tu vida. Recuerda que el tiempo es finito.",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: "#1a1a1a",
 };
 
 export default function RootLayout({
@@ -32,7 +58,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={inter.className}>{children}</body>
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Memento Mori" />
+      </head>
+      <body className="font-body antialiased">{children}</body>
     </html>
   );
 }
