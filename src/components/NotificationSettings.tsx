@@ -29,7 +29,7 @@ export function NotificationSettings({
     }
     return 'default';
   });
-  const [showTestNotification, setShowTestNotification] = useState(false);
+  const [testButtonState, setTestButtonState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
   // Sincronizar el estado cuando el componente se abre
   useEffect(() => {
@@ -56,61 +56,62 @@ export function NotificationSettings({
   }, [onUpdate]);
 
   const sendTestNotification = useCallback(async () => {
+    // Feedback inmediato
+    setTestButtonState('sending');
+
     // Verificar directamente con la API del navegador
     if (typeof window === 'undefined' || !('Notification' in window)) {
-      console.error('Notificaciones no soportadas en este navegador');
+      setTestButtonState('error');
+      setTimeout(() => setTestButtonState('idle'), 3000);
       return;
     }
 
     // Verificar el permiso directamente con la API
     const currentPermission = Notification.permission;
     if (currentPermission !== 'granted') {
-      console.error('Permiso de notificación no otorgado:', currentPermission);
       setNotificationPermission(currentPermission);
+      setTestButtonState('error');
+      setTimeout(() => setTestButtonState('idle'), 3000);
       return;
     }
 
-    const notificationOptions = {
+    const notificationOptions: NotificationOptions = {
       body: `Semana ${weeksLived + 1} de 4,160. Te quedan ${weeksRemaining} semanas para los 80.`,
       icon: '/icon-192x192.png',
       badge: '/icon-192x192.png',
       tag: 'memento-mori-test',
+      requireInteraction: false,
     };
 
     try {
-      // Intentar usar Service Worker primero (requerido en Android)
-      if ('serviceWorker' in navigator) {
+      // Intentar usar Service Worker (requerido en Android)
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         const registration = await navigator.serviceWorker.ready;
         await registration.showNotification('Memento Mori', notificationOptions);
-        setShowTestNotification(true);
-        setTimeout(() => setShowTestNotification(false), 3000);
+        setTestButtonState('sent');
+        setTimeout(() => setTestButtonState('idle'), 3000);
         return;
       }
 
-      // Fallback para navegadores de escritorio sin SW activo
+      // Fallback: usar Notification directa (funciona en desktop)
       const notification = new Notification('Memento Mori', notificationOptions);
       notification.onclick = () => {
         window.focus();
         notification.close();
       };
-      setShowTestNotification(true);
-      setTimeout(() => setShowTestNotification(false), 3000);
+      setTestButtonState('sent');
+      setTimeout(() => setTestButtonState('idle'), 3000);
     } catch (error) {
-      console.error('Error al enviar notificación de prueba:', error);
+      console.error('Error en notificación:', error);
 
-      // Fallback: intentar con Notification directa si SW falló
+      // Último intento con Notification directa
       try {
-        const notification = new Notification('Memento Mori', notificationOptions);
-        notification.onclick = () => {
-          window.focus();
-          notification.close();
-        };
+        new Notification('Memento Mori', notificationOptions);
+        setTestButtonState('sent');
       } catch {
-        // Ignorar si también falla
+        setTestButtonState('error');
       }
-
-      setShowTestNotification(true);
-      setTimeout(() => setShowTestNotification(false), 3000);
+      setTimeout(() => setTestButtonState('idle'), 3000);
     }
   }, [weeksLived, weeksRemaining]);
 
@@ -276,10 +277,19 @@ export function NotificationSettings({
                   <div className="pt-4 border-t border-gray-subtle">
                     <button
                       onClick={sendTestNotification}
-                      className="w-full py-2 bg-white border border-gray-subtle rounded-lg
-                                 text-dark hover:bg-gray-subtle/20 transition-colors"
+                      disabled={testButtonState === 'sending'}
+                      className={`w-full py-2 border rounded-lg transition-colors ${
+                        testButtonState === 'error'
+                          ? 'bg-red-100 border-red-300 text-red-700'
+                          : testButtonState === 'sent'
+                          ? 'bg-green-100 border-green-300 text-green-700'
+                          : 'bg-white border-gray-subtle text-dark hover:bg-gray-subtle/20'
+                      } disabled:opacity-50`}
                     >
-                      {showTestNotification ? '¡Notificación enviada!' : 'Enviar notificación de prueba'}
+                      {testButtonState === 'sending' && 'Enviando...'}
+                      {testButtonState === 'sent' && '¡Notificación enviada!'}
+                      {testButtonState === 'error' && 'Error - Revisa permisos'}
+                      {testButtonState === 'idle' && 'Enviar notificación de prueba'}
                     </button>
                   </div>
                 </>
