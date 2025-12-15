@@ -168,21 +168,6 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
     setTooltip(null);
   }, []);
 
-  // Find week element at touch position
-  const getWeekAtPosition = useCallback((clientX: number, clientY: number): { week: WeekInfo; rect: DOMRect } | null => {
-    const elements = document.elementsFromPoint(clientX, clientY);
-    const weekCell = elements.find(el => el.classList.contains('week-cell')) as HTMLElement;
-
-    if (weekCell) {
-      const weekNumber = parseInt(weekCell.dataset.weekNumber || '0', 10);
-      const week = weeksData.find(w => w.weekNumber === weekNumber);
-      if (week) {
-        return { week, rect: weekCell.getBoundingClientRect() };
-      }
-    }
-    return null;
-  }, [weeksData]);
-
   // Handle touch start for magnifier
   const handleTouchStart = useCallback(() => {
     // Start drag detection
@@ -190,7 +175,7 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
   }, []);
 
   // Handle touch move for magnifier (mobile drag)
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+  const handleTouchMove = useCallback(() => {
     if (!gridRef.current) return;
 
     // Mark as dragging
