@@ -1,19 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import type { ViewMode } from '@/types';
 
 interface HeaderProps {
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
   onOpenSettings: () => void;
   onOpenDisclaimer: () => void;
   onReset: () => void;
 }
 
 export function Header({
-  viewMode,
-  onViewModeChange,
   onOpenSettings,
   onOpenDisclaimer,
   onReset,
@@ -41,19 +36,6 @@ export function Header({
 
       {/* Controls */}
       <div className="flex items-center justify-center gap-4 mt-4">
-        {/* View mode toggle */}
-        <button
-          onClick={() => onViewModeChange(viewMode === 'default' ? 'perspective' : 'default')}
-          className={`
-            px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-            ${viewMode === 'perspective'
-              ? 'bg-dark text-cream'
-              : 'bg-white/50 text-dark hover:bg-white/80'}
-          `}
-        >
-          {viewMode === 'perspective' ? 'Modo Perspectiva ✓' : 'Modo Perspectiva'}
-        </button>
-
         {/* Settings button */}
         <button
           onClick={onOpenSettings}

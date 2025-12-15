@@ -83,6 +83,22 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
+/* Magnifier styles - circular lens effect for mobile */
+.magnifier {
+  @apply absolute z-50 px-3 py-2 text-sm bg-dark text-cream shadow-xl;
+  pointer-events: none;
+  border-radius: 50%;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 3px var(--gold),
+    0 0 20px rgba(0, 0, 0, 0.5),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
 .tooltip-moment {
   @apply whitespace-normal;
 }

@@ -11,7 +11,7 @@ import { MomentModal } from '@/components/MomentModal';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { Disclaimer } from '@/components/Disclaimer';
 import { useUserData } from '@/hooks/useUserData';
-import type { ViewMode, WeekInfo } from '@/types';
+import type { WeekInfo } from '@/types';
 
 export default function Home() {
   const {
@@ -29,7 +29,6 @@ export default function Home() {
     maxMoments,
   } = useUserData();
 
-  const [viewMode, setViewMode] = useState<ViewMode>('default');
   const [showMomentModal, setShowMomentModal] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
@@ -68,13 +67,10 @@ export default function Home() {
     }, 1000);
   }, [saveBirthDate]);
 
-  // Handle week click in perspective mode
+  // Handle week click
   const handleWeekClick = useCallback((week: WeekInfo) => {
-    if (viewMode === 'perspective') {
-      // Could show more details or allow adding moments from here
-      console.log('Week clicked:', week);
-    }
-  }, [viewMode]);
+    console.log('Week clicked:', week);
+  }, []);
 
   // Handle reset
   const handleReset = useCallback(() => {
@@ -116,8 +112,6 @@ export default function Home() {
     <div className="min-h-screen bg-cream">
       {/* Header */}
       <Header
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         onOpenSettings={() => setShowNotificationSettings(true)}
         onOpenDisclaimer={() => setShowDisclaimer(true)}
         onReset={handleReset}
@@ -162,7 +156,6 @@ export default function Home() {
             <WeekGrid
               birthDate={userData.birthDate}
               moments={moments}
-              viewMode={viewMode}
               onWeekClick={handleWeekClick}
             />
           </div>
@@ -175,12 +168,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Perspective mode hint */}
-        {viewMode === 'perspective' && (
-          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-dark text-cream px-4 py-2 rounded-lg text-sm shadow-lg">
-            Pasa el cursor sobre los cuadros para ver detalles
-          </div>
-        )}
       </main>
 
       {/* Footer */}

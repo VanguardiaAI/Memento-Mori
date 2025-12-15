@@ -2,13 +2,12 @@
 
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Moment, WeekInfo, ViewMode } from '@/types';
+import type { Moment, WeekInfo } from '@/types';
 import { TOTAL_YEARS, WEEKS_PER_YEAR, TOTAL_WEEKS, getWeekInfo, weekNumberToAge, formatDate, getWeeksAgo, getMomentStats, formatTimeAgo, formatWeekOfMonth } from '@/utils/dateCalculations';
 
 interface WeekGridProps {
   birthDate: string;
   moments: Moment[];
-  viewMode: ViewMode;
   onWeekClick?: (week: WeekInfo) => void;
 }
 
@@ -18,10 +17,18 @@ interface TooltipData {
   y: number;
 }
 
+interface MagnifierData {
+  week: WeekInfo;
+  x: number;
+  y: number;
+}
+
 const YEARS_PER_GROUP = 10; // Separación cada 10 años
 
-export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGridProps) {
+export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
+  const [magnifier, setMagnifier] = useState<MagnifierData | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -81,9 +88,10 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
     return groups;
   }, [weeksData]);
 
-  // Show tooltip on hover (only in perspective mode)
+  // Show tooltip on hover (desktop)
   const handleWeekHover = useCallback((week: WeekInfo, event: React.MouseEvent) => {
-    if (viewMode !== 'perspective') return;
+    // Don't show tooltip on hover if user is on touch device (will use tap instead)
+    if ('ontouchstart' in window) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
     const gridRect = gridRef.current?.getBoundingClientRect();
@@ -95,13 +103,14 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
         y: rect.top - gridRect.top - 10,
       });
     }
-  }, [viewMode]);
+  }, []);
 
   const handleWeekLeave = useCallback(() => {
-    if (viewMode === 'perspective') {
+    // Only clear tooltip on desktop hover
+    if (!('ontouchstart' in window)) {
       setTooltip(null);
     }
-  }, [viewMode]);
+  }, []);
 
   // Show tooltip on click/tap (always works)
   const handleWeekClick = useCallback((week: WeekInfo, event: React.MouseEvent | React.TouchEvent) => {
@@ -134,6 +143,56 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
     setTooltip(null);
   }, []);
 
+  // Find week element at touch position
+  const getWeekAtPosition = useCallback((clientX: number, clientY: number): { week: WeekInfo; rect: DOMRect } | null => {
+    const elements = document.elementsFromPoint(clientX, clientY);
+    const weekCell = elements.find(el => el.classList.contains('week-cell')) as HTMLElement;
+
+    if (weekCell) {
+      const weekNumber = parseInt(weekCell.dataset.weekNumber || '0', 10);
+      const week = weeksData.find(w => w.weekNumber === weekNumber);
+      if (week) {
+        return { week, rect: weekCell.getBoundingClientRect() };
+      }
+    }
+    return null;
+  }, [weeksData]);
+
+  // Handle touch start for magnifier
+  const handleTouchStart = useCallback(() => {
+    // Start drag detection
+    setIsDragging(false);
+  }, []);
+
+  // Handle touch move for magnifier (mobile drag)
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!gridRef.current) return;
+
+    // Mark as dragging
+    setIsDragging(true);
+    setTooltip(null); // Close any open tooltip when dragging
+
+    const touch = e.touches[0];
+    const result = getWeekAtPosition(touch.clientX, touch.clientY);
+
+    if (result) {
+      const gridRect = gridRef.current.getBoundingClientRect();
+      setMagnifier({
+        week: result.week,
+        x: touch.clientX - gridRect.left,
+        y: touch.clientY - gridRect.top - 80, // Position above finger
+      });
+    } else {
+      setMagnifier(null);
+    }
+  }, [getWeekAtPosition]);
+
+  // Handle touch end
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    setMagnifier(null);
+  }, []);
+
   return (
     <div className="relative w-full" ref={gridRef}>
       {/* Header */}
@@ -147,7 +206,12 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
       </div>
 
       {/* Grid container - responsive, no scroll */}
-      <div className="grid-container pb-4">
+      <div
+        className="grid-container pb-4"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="flex">
           {/* Year labels column */}
           <div className="flex flex-col mr-1 md:mr-2 flex-shrink-0 w-6 md:w-8">
@@ -194,6 +258,7 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
                     return (
                       <motion.div
                         key={week.weekNumber}
+                        data-week-number={week.weekNumber}
                         initial={!hasAnimated && week.isLived ? { backgroundColor: '#c4bfb4' } : undefined}
                         animate={week.isLived ? { backgroundColor: isMoment ? '#b8973f' : '#5c564a' } : undefined}
                         transition={!hasAnimated ? { delay: baseDelay, duration: 0.3, ease: 'easeOut' } : undefined}
@@ -202,6 +267,7 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
                           aspect-square
                           cursor-pointer
                           ${isSelected ? 'ring-2 ring-gold ring-offset-1 ring-offset-cream' : ''}
+                          ${magnifier?.week.weekNumber === week.weekNumber ? 'ring-2 ring-gold scale-150 z-20' : ''}
                           ${week.isLived
                             ? isMoment
                               ? 'bg-gold'
@@ -214,7 +280,12 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
                         onMouseEnter={(e) => handleWeekHover(week, e)}
                         onMouseLeave={handleWeekLeave}
                         onClick={(e) => handleWeekClick(week, e)}
-                        onTouchEnd={(e) => handleWeekClick(week, e)}
+                        onTouchEnd={(e) => {
+                          // Only show tooltip on tap, not after drag
+                          if (!isDragging) {
+                            handleWeekClick(week, e);
+                          }
+                        }}
                       />
                     );
                   })}
@@ -249,6 +320,26 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
               </svg>
             </button>
             <WeekTooltip week={tooltip.week} birthDate={birthDate} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Magnifier - shows on mobile drag */}
+      <AnimatePresence>
+        {magnifier && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.15 }}
+            className="magnifier"
+            style={{
+              left: magnifier.x,
+              top: magnifier.y,
+              transform: 'translate(-50%, -100%)',
+            }}
+          >
+            <MagnifierContent week={magnifier.week} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -360,6 +451,44 @@ function WeekTooltip({ week, birthDate }: WeekTooltipProps) {
       {!week.isLived && !week.isCurrent && (
         <div className="text-xs opacity-50 italic">
           Aún por vivir
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Compact magnifier content for mobile drag
+function MagnifierContent({ week }: { week: WeekInfo }) {
+  const { years } = weekNumberToAge(week.weekNumber);
+
+  return (
+    <div className="text-center">
+      {/* Week date */}
+      <div className="font-medium text-gold-light text-sm mb-0.5">
+        {formatWeekOfMonth(week.date)}
+      </div>
+
+      {/* Week info */}
+      <div className="text-xs opacity-80">
+        Año {week.year} · Semana {week.weekOfYear}
+      </div>
+
+      {/* Age */}
+      <div className="text-xs opacity-70">
+        {years} años
+      </div>
+
+      {/* Moment name if exists */}
+      {week.moment && (
+        <div className="text-xs text-gold-light mt-1 font-medium truncate max-w-[120px]">
+          {week.moment.name}
+        </div>
+      )}
+
+      {/* Status indicator */}
+      {week.isCurrent && (
+        <div className="text-[10px] text-gold-light mt-0.5">
+          ← Ahora
         </div>
       )}
     </div>
