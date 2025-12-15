@@ -69,11 +69,11 @@ body {
 
 /* Tooltip styles */
 .tooltip {
-  @apply absolute z-50 px-3 py-2.5 text-sm bg-dark text-cream rounded-lg shadow-xl;
-  @apply pointer-events-none;
-  min-width: 160px;
-  max-width: 300px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  @apply absolute z-50 px-4 py-3 text-sm bg-dark text-cream rounded-lg shadow-xl;
+  pointer-events: auto;
+  min-width: 180px;
+  max-width: 320px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 .tooltip-moment {

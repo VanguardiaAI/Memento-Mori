@@ -31,6 +31,31 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
     return () => clearTimeout(timer);
   }, []);
 
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (tooltip && gridRef.current) {
+        const target = event.target as Node;
+        // Check if click is outside the tooltip area
+        const tooltipEl = gridRef.current.querySelector('.tooltip');
+        if (tooltipEl && !tooltipEl.contains(target)) {
+          // Check if click is on a week cell
+          const weekCell = (event.target as Element).closest('.week-cell');
+          if (!weekCell) {
+            setTooltip(null);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [tooltip]);
+
   // Pre-calculate all week info for performance
   const weeksData = useMemo(() => {
     const data: WeekInfo[] = [];
@@ -55,6 +80,7 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
     return groups;
   }, [weeksData]);
 
+  // Show tooltip on hover (only in perspective mode)
   const handleWeekHover = useCallback((week: WeekInfo, event: React.MouseEvent) => {
     if (viewMode !== 'perspective') return;
 
@@ -71,14 +97,41 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
   }, [viewMode]);
 
   const handleWeekLeave = useCallback(() => {
-    setTooltip(null);
-  }, []);
+    if (viewMode === 'perspective') {
+      setTooltip(null);
+    }
+  }, [viewMode]);
 
-  const handleClick = useCallback((week: WeekInfo) => {
+  // Show tooltip on click/tap (always works)
+  const handleWeekClick = useCallback((week: WeekInfo, event: React.MouseEvent | React.TouchEvent) => {
+    event.stopPropagation();
+
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const gridRect = gridRef.current?.getBoundingClientRect();
+
+    if (gridRect) {
+      // If clicking the same week, toggle off
+      if (tooltip?.week.weekNumber === week.weekNumber) {
+        setTooltip(null);
+      } else {
+        setTooltip({
+          week,
+          x: rect.left - gridRect.left + rect.width / 2,
+          y: rect.top - gridRect.top - 10,
+        });
+      }
+    }
+
     if (onWeekClick) {
       onWeekClick(week);
     }
-  }, [onWeekClick]);
+  }, [tooltip, onWeekClick]);
+
+  // Close tooltip
+  const handleCloseTooltip = useCallback(() => {
+    setTooltip(null);
+  }, []);
 
   return (
     <div className="relative w-full" ref={gridRef}>
@@ -86,6 +139,9 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
       <div className="flex items-center justify-between mb-4 px-2">
         <div className="text-xs text-gray-dark">
           Semanas (1-52) →
+        </div>
+        <div className="text-xs text-gray-dark">
+          Toca cualquier semana para ver detalles
         </div>
       </div>
 
@@ -128,6 +184,7 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
                   {yearWeeks.map((week) => {
                     const isMoment = !!week.moment;
                     const baseDelay = hasAnimated ? 0 : Math.min(week.weekNumber / weeksLived, 1) * 1.5;
+                    const isSelected = tooltip?.week.weekNumber === week.weekNumber;
 
                     return (
                       <motion.div
@@ -139,6 +196,7 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
                           week-cell
                           w-[5px] h-[5px] md:w-[6px] md:h-[6px]
                           cursor-pointer
+                          ${isSelected ? 'ring-2 ring-gold ring-offset-1 ring-offset-cream' : ''}
                           ${week.isLived
                             ? isMoment
                               ? 'bg-gold'
@@ -150,8 +208,8 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
                         `}
                         onMouseEnter={(e) => handleWeekHover(week, e)}
                         onMouseLeave={handleWeekLeave}
-                        onClick={() => handleClick(week)}
-                        title={viewMode !== 'perspective' ? undefined : ''}
+                        onClick={(e) => handleWeekClick(week, e)}
+                        onTouchEnd={(e) => handleWeekClick(week, e)}
                       />
                     );
                   })}
@@ -162,9 +220,9 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
         </div>
       </div>
 
-      {/* Tooltip */}
+      {/* Tooltip - now shows on click/tap always */}
       <AnimatePresence>
-        {tooltip && viewMode === 'perspective' && (
+        {tooltip && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
@@ -176,6 +234,15 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
               transform: 'translate(-50%, -100%)',
             }}
           >
+            {/* Close button */}
+            <button
+              onClick={handleCloseTooltip}
+              className="absolute -top-2 -right-2 w-6 h-6 bg-gray-dark rounded-full flex items-center justify-center text-cream hover:bg-dark transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             <WeekTooltip week={tooltip.week} birthDate={birthDate} />
           </motion.div>
         )}
