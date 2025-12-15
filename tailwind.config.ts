@@ -10,11 +10,12 @@ const config: Config = {
     extend: {
       colors: {
         cream: "#f5f0e1",
-        dark: "#1a1a1a",
-        gold: "#c9a227",
-        "gold-light": "#e6c84a",
+        dark: "#5c564a",        // Gris cálido más suave (antes #1a1a1a)
+        gold: "#b8973f",        // Dorado más suave
+        "gold-light": "#d4b85c",
         "gray-subtle": "#d4d0c5",
-        "gray-dark": "#8a8578",
+        "gray-dark": "#9a958a",  // Gris más claro
+        "gray-light": "#c4bfb4", // Nuevo: gris claro para animación inicial
       },
       fontFamily: {
         display: ["Georgia", "Times New Roman", "serif"],
@@ -33,8 +34,8 @@ const config: Config = {
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         fillWeek: {
-          "0%": { backgroundColor: "transparent" },
-          "100%": { backgroundColor: "#1a1a1a" },
+          "0%": { backgroundColor: "#c4bfb4" },
+          "100%": { backgroundColor: "#5c564a" },
         },
       },
     },
