@@ -83,6 +83,15 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
+/* Responsive tooltip for mobile - smaller width with generous margins */
+@media (max-width: 767px) {
+  .tooltip {
+    max-width: calc(100vw - 32px); /* Full width minus generous margins (16px each side) */
+    min-width: min(180px, calc(100vw - 32px));
+    font-size: 0.875rem; /* 14px */
+  }
+}
+
 /* Magnifier styles - circular lens effect for mobile */
 .magnifier {
   @apply absolute z-50 px-3 py-2 text-sm bg-dark text-cream shadow-xl;
