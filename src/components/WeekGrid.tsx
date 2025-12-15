@@ -39,30 +39,8 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Close tooltip when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (tooltip && gridRef.current) {
-        const target = event.target as Node;
-        // Check if click is outside the tooltip area
-        const tooltipEl = gridRef.current.querySelector('.tooltip');
-        if (tooltipEl && !tooltipEl.contains(target)) {
-          // Check if click is on a week cell
-          const weekCell = (event.target as Element).closest('.week-cell');
-          if (!weekCell) {
-            setTooltip(null);
-          }
-        }
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [tooltip]);
+  // Tooltip only closes with X button - no click outside behavior
+  // useEffect removed as requested - tooltip stays open until user clicks X
 
   // Pre-calculate all week info for performance
   const weeksData = useMemo(() => {
@@ -131,13 +109,12 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
   }, []);
 
   const handleWeekLeave = useCallback(() => {
-    // Only clear tooltip on desktop hover
-    if (!('ontouchstart' in window)) {
-      setTooltip(null);
-    }
+    // Don't clear tooltip - it stays until user clicks X button
+    // Tooltip persistence as requested
   }, []);
 
   // Show tooltip on click/tap (always works)
+  // Tooltip always stays open until user clicks X button
   const handleWeekClick = useCallback((week: WeekInfo, event: React.MouseEvent | React.TouchEvent) => {
     event.stopPropagation();
 
@@ -146,49 +123,45 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
     const gridRect = gridRef.current?.getBoundingClientRect();
 
     if (gridRect) {
-      // If clicking the same week, toggle off
-      if (tooltip?.week.weekNumber === week.weekNumber) {
-        setTooltip(null);
-      } else {
-        // Calculate initial position
-        let x = rect.left - gridRect.left + rect.width / 2;
-        let y = rect.top - gridRect.top - 10;
+      // Always show tooltip for the clicked week (no toggle)
+      // Calculate initial position
+      let x = rect.left - gridRect.left + rect.width / 2;
+      let y = rect.top - gridRect.top - 10;
 
-        // On mobile, ensure tooltip stays within viewport with generous margins
-        if (typeof window !== 'undefined') {
-          const isMobile = window.innerWidth < 768;
-          const margin = isMobile ? 16 : 10; // Generous margin on mobile
-          const tooltipWidth = isMobile ? Math.min(280, window.innerWidth - margin * 2) : 320;
+      // On mobile, ensure tooltip stays within viewport with generous margins
+      if (typeof window !== 'undefined') {
+        const isMobile = window.innerWidth < 768;
+        const margin = isMobile ? 16 : 10; // Generous margin on mobile
+        const tooltipWidth = isMobile ? Math.min(280, window.innerWidth - margin * 2) : 320;
 
-          // Check horizontal bounds
-          const leftBound = margin;
-          const rightBound = window.innerWidth - margin;
+        // Check horizontal bounds
+        const leftBound = margin;
+        const rightBound = window.innerWidth - margin;
 
-          // Adjust x if tooltip would overflow
-          if (x - tooltipWidth / 2 < leftBound) {
-            x = leftBound + tooltipWidth / 2;
-          } else if (x + tooltipWidth / 2 > rightBound) {
-            x = rightBound - tooltipWidth / 2;
-          }
-
-          // Adjust y if tooltip would overflow top
-          if (y < margin + 100) { // 100px estimated tooltip height
-            y = rect.top - gridRect.top + rect.height + 10; // Show below instead
-          }
+        // Adjust x if tooltip would overflow
+        if (x - tooltipWidth / 2 < leftBound) {
+          x = leftBound + tooltipWidth / 2;
+        } else if (x + tooltipWidth / 2 > rightBound) {
+          x = rightBound - tooltipWidth / 2;
         }
 
-        setTooltip({
-          week,
-          x,
-          y,
-        });
+        // Adjust y if tooltip would overflow top
+        if (y < margin + 100) { // 100px estimated tooltip height
+          y = rect.top - gridRect.top + rect.height + 10; // Show below instead
+        }
       }
+
+      setTooltip({
+        week,
+        x,
+        y,
+      });
     }
 
     if (onWeekClick) {
       onWeekClick(week);
     }
-  }, [tooltip, onWeekClick]);
+  }, [onWeekClick]);
 
   // Close tooltip
   const handleCloseTooltip = useCallback(() => {
@@ -222,22 +195,11 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
 
     // Mark as dragging
     setIsDragging(true);
-    setTooltip(null); // Close any open tooltip when dragging
-
-    const touch = e.touches[0];
-    const result = getWeekAtPosition(touch.clientX, touch.clientY);
-
-    if (result) {
-      const gridRect = gridRef.current.getBoundingClientRect();
-      setMagnifier({
-        week: result.week,
-        x: touch.clientX - gridRect.left,
-        y: touch.clientY - gridRect.top - 80, // Position above finger
-      });
-    } else {
-      setMagnifier(null);
-    }
-  }, [getWeekAtPosition]);
+    // Don't show magnifier or close tooltip on mobile drag
+    // setTooltip(null); // Keep tooltip open
+    // Magnifier disabled on mobile as requested
+    setMagnifier(null);
+  }, []);
 
   // Handle touch end
   const handleTouchEnd = useCallback(() => {
