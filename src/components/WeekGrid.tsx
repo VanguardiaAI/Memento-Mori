@@ -179,8 +179,8 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
               return (
                 <div
                   key={yearIndex}
-                  className="flex gap-[1px]"
-                  style={{ marginBottom: isGroupEnd ? '8px' : '1px' }}
+                  className="flex gap-[2px]"
+                  style={{ marginBottom: isGroupEnd ? '8px' : '2px' }}
                 >
                   {yearWeeks.map((week) => {
                     const isMoment = !!week.moment;
