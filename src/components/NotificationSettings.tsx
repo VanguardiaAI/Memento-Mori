@@ -23,14 +23,20 @@ export function NotificationSettings({
   weeksLived,
   weeksRemaining,
 }: NotificationSettingsProps) {
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission;
+    }
+    return 'default';
+  });
   const [showTestNotification, setShowTestNotification] = useState(false);
 
+  // Sincronizar el estado cuando el componente se abre
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (isOpen && typeof window !== 'undefined' && 'Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
-  }, []);
+  }, [isOpen]);
 
   const requestPermission = useCallback(async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -50,23 +56,43 @@ export function NotificationSettings({
   }, [onUpdate]);
 
   const sendTestNotification = useCallback(() => {
-    if (notificationPermission !== 'granted') return;
+    // Verificar directamente con la API del navegador, no con el estado de React
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      console.error('Notificaciones no soportadas en este navegador');
+      return;
+    }
 
-    const notification = new Notification('Memento Mori', {
-      body: `Semana ${weeksLived + 1} de 4,160. Te quedan ${weeksRemaining} semanas para los 80.`,
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
-      tag: 'memento-mori-test',
-    });
+    // Verificar el permiso directamente con la API
+    const currentPermission = Notification.permission;
+    if (currentPermission !== 'granted') {
+      console.error('Permiso de notificación no otorgado:', currentPermission);
+      // Actualizar el estado por si estaba desactualizado
+      setNotificationPermission(currentPermission);
+      return;
+    }
 
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
+    try {
+      const notification = new Notification('Memento Mori', {
+        body: `Semana ${weeksLived + 1} de 4,160. Te quedan ${weeksRemaining} semanas para los 80.`,
+        icon: '/icon-192x192.png',
+        badge: '/icon-192x192.png',
+        tag: 'memento-mori-test',
+      });
 
-    setShowTestNotification(true);
-    setTimeout(() => setShowTestNotification(false), 3000);
-  }, [notificationPermission, weeksLived, weeksRemaining]);
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      setShowTestNotification(true);
+      setTimeout(() => setShowTestNotification(false), 3000);
+    } catch (error) {
+      console.error('Error al enviar notificación de prueba:', error);
+      // Mostrar feedback visual aunque haya error
+      setShowTestNotification(true);
+      setTimeout(() => setShowTestNotification(false), 3000);
+    }
+  }, [weeksLived, weeksRemaining]);
 
   const handleToggle = useCallback(() => {
     if (!settings.enabled && notificationPermission !== 'granted') {
