@@ -59,56 +59,44 @@ export function NotificationSettings({
     // Feedback inmediato
     setTestButtonState('sending');
 
-    // Verificar directamente con la API del navegador
-    if (typeof window === 'undefined' || !('Notification' in window)) {
-      setTestButtonState('error');
-      setTimeout(() => setTestButtonState('idle'), 3000);
-      return;
-    }
-
-    // Verificar el permiso directamente con la API
-    const currentPermission = Notification.permission;
-    if (currentPermission !== 'granted') {
-      setNotificationPermission(currentPermission);
-      setTestButtonState('error');
-      setTimeout(() => setTestButtonState('idle'), 3000);
-      return;
-    }
-
-    const notificationOptions: NotificationOptions = {
+    const notificationOptions = {
       body: `Semana ${weeksLived + 1} de 4,160. Te quedan ${weeksRemaining} semanas para los 80.`,
       icon: '/icon-192x192.png',
       badge: '/icon-192x192.png',
       tag: 'memento-mori-test',
-      requireInteraction: false,
+      vibrate: [200, 100, 200] as number[],
     };
 
     try {
-      // Intentar usar Service Worker (requerido en Android)
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.showNotification('Memento Mori', notificationOptions);
+      // En Android, SIEMPRE usar Service Worker
+      if ('serviceWorker' in navigator) {
+        // Esperar a que el SW esté listo (con timeout de 5 segundos)
+        const swReady = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('SW timeout')), 5000)
+          )
+        ]) as ServiceWorkerRegistration;
+
+        await swReady.showNotification('Memento Mori', notificationOptions);
         setTestButtonState('sent');
         setTimeout(() => setTestButtonState('idle'), 3000);
         return;
       }
 
-      // Fallback: usar Notification directa (funciona en desktop)
-      const notification = new Notification('Memento Mori', notificationOptions);
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
+      // Fallback para navegadores sin SW
+      new Notification('Memento Mori', notificationOptions);
       setTestButtonState('sent');
       setTimeout(() => setTestButtonState('idle'), 3000);
     } catch (error) {
       console.error('Error en notificación:', error);
 
-      // Último intento con Notification directa
+      // Último intento: Notification directa
       try {
         new Notification('Memento Mori', notificationOptions);
         setTestButtonState('sent');
-      } catch {
+      } catch (e) {
+        console.error('Fallback también falló:', e);
         setTestButtonState('error');
       }
       setTimeout(() => setTestButtonState('idle'), 3000);
