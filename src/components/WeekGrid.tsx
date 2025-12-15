@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Moment, WeekInfo, ViewMode } from '@/types';
-import { TOTAL_YEARS, WEEKS_PER_YEAR, TOTAL_WEEKS, getWeekInfo, weekNumberToAge, formatDate, getWeeksAgo, getMomentStats, formatTimeAgo } from '@/utils/dateCalculations';
+import { TOTAL_YEARS, WEEKS_PER_YEAR, TOTAL_WEEKS, getWeekInfo, weekNumberToAge, formatDate, getWeeksAgo, getMomentStats, formatTimeAgo, formatWeekOfMonth } from '@/utils/dateCalculations';
 
 interface WeekGridProps {
   birthDate: string;
@@ -204,7 +204,10 @@ function WeekTooltip({ week, birthDate }: WeekTooltipProps) {
         <div className="text-gold-light font-medium text-base mb-1">
           {week.moment.name}
         </div>
-        <div className="text-xs opacity-70 mb-3">
+        <div className="text-xs opacity-90 mb-1">
+          {formatWeekOfMonth(week.date)}
+        </div>
+        <div className="text-xs opacity-60 mb-3">
           {formatDate(new Date(week.moment.date))}
         </div>
 
@@ -254,21 +257,37 @@ function WeekTooltip({ week, birthDate }: WeekTooltipProps) {
   // Tooltip normal para semanas sin momento
   return (
     <div className="text-center">
-      <div className="font-medium">Semana {week.weekNumber.toLocaleString('es-ES')} de 4,160</div>
-      <div className="text-xs opacity-80">
-        Año {week.year} · Semana {week.weekOfYear}
+      {/* Fecha de la semana - Primera semana de Febrero de 2003 */}
+      <div className="font-medium text-gold-light mb-1">
+        {formatWeekOfMonth(week.date)}
       </div>
-      <div className="text-xs opacity-80">
-        Edad: {years} años{weeks > 0 ? ` y ${weeks} semanas` : ''}
+
+      <div className="text-xs opacity-60 mb-2">
+        Semana {week.weekNumber.toLocaleString('es-ES')} de 4,160
       </div>
+
+      <div className="bg-cream/10 rounded px-2 py-1.5 mb-2">
+        <div className="text-xs opacity-80">
+          Año {week.year} de tu vida · Semana {week.weekOfYear}
+        </div>
+        <div className="text-xs opacity-80">
+          Edad: {years} años{weeks > 0 ? ` y ${weeks} semanas` : ''}
+        </div>
+      </div>
+
       {week.isLived && weeksAgo > 0 && (
-        <div className="text-xs opacity-60 mt-1">
+        <div className="text-xs opacity-60">
           {formatTimeAgo(weeksAgo)}
         </div>
       )}
       {week.isCurrent && (
         <div className="mt-1 text-xs text-gold-light font-medium">
-          ← Semana actual
+          ← Estás aquí
+        </div>
+      )}
+      {!week.isLived && !week.isCurrent && (
+        <div className="text-xs opacity-50 italic">
+          Aún por vivir
         </div>
       )}
     </div>

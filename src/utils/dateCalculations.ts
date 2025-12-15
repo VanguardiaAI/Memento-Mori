@@ -6,7 +6,9 @@ import {
   addWeeks,
   addYears,
   startOfWeek,
+  startOfMonth,
   format,
+  getYear,
   parseISO,
   isValid,
   isFuture,
@@ -222,4 +224,37 @@ export function formatTimeAgo(weeksAgo: number): string {
   }
 
   return `hace ${years} año${years !== 1 ? 's' : ''} y ${remainingMonths} mes${remainingMonths !== 1 ? 'es' : ''}`;
+}
+
+const WEEK_ORDINALS = [
+  'Primera',
+  'Segunda',
+  'Tercera',
+  'Cuarta',
+  'Quinta',
+];
+
+export function formatWeekOfMonth(date: Date): string {
+  const monthStart = startOfMonth(date);
+  const weekOfMonth = Math.ceil((date.getDate() + monthStart.getDay()) / 7);
+  const monthName = format(date, 'MMMM', { locale: es });
+  const year = getYear(date);
+
+  // Capitalizar el mes
+  const monthCapitalized = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+  const ordinal = WEEK_ORDINALS[Math.min(weekOfMonth - 1, 4)] || `Semana ${weekOfMonth}`;
+
+  return `${ordinal} semana de ${monthCapitalized} de ${year}`;
+}
+
+export function formatWeekOfMonthShort(date: Date): string {
+  const monthStart = startOfMonth(date);
+  const weekOfMonth = Math.ceil((date.getDate() + monthStart.getDay()) / 7);
+  const monthName = format(date, 'MMMM', { locale: es });
+
+  const monthCapitalized = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  const ordinal = WEEK_ORDINALS[Math.min(weekOfMonth - 1, 4)] || `${weekOfMonth}ª`;
+
+  return `${ordinal} sem. de ${monthCapitalized}`;
 }
