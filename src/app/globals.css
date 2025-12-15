@@ -4,8 +4,8 @@
 
 :root {
   --cream: #f5f0e1;
-  --dark: #1a1a1a;
-  --gold: #c9a227;
+  --dark: #5c564a;
+  --gold: #b8973f;
   --gray-subtle: #d4d0c5;
 }
 
@@ -45,11 +45,18 @@ body {
   background: #b8b3a6;
 }
 
-/* Grid container for smooth scrolling */
+/* Grid container - responsive, no horizontal scroll */
 .grid-container {
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
+}
+
+/* Week row height - syncs year labels with grid rows */
+.week-row-height {
+  /* Matches the aspect-square cells in the grid */
+  /* Height = (container width - label width - gaps) / 52 */
+  height: calc((100vw - 4rem) / 52);
+  max-height: 8px;
+  min-height: 4px;
 }
 
 /* Week cell styles */

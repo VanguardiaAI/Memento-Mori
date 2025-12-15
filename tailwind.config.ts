@@ -8,6 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      gridTemplateColumns: {
+        '52': 'repeat(52, minmax(0, 1fr))',
+      },
       colors: {
         cream: "#f5f0e1",
         dark: "#5c564a",        // Gris cálido más suave (antes #1a1a1a)

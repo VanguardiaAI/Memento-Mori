@@ -146,19 +146,19 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
         </div>
       </div>
 
-      {/* Grid container */}
-      <div className="grid-container overflow-x-auto pb-4">
+      {/* Grid container - responsive, no scroll */}
+      <div className="grid-container pb-4">
         <div className="flex">
           {/* Year labels column */}
-          <div className="flex flex-col mr-2 flex-shrink-0">
+          <div className="flex flex-col mr-1 md:mr-2 flex-shrink-0 w-6 md:w-8">
             {Array.from({ length: TOTAL_YEARS }, (_, i) => i + 1).map((year) => {
               const isGroupEnd = year % YEARS_PER_GROUP === 0 && year < TOTAL_YEARS;
               return (
                 <div
                   key={year}
-                  className="h-[5px] md:h-[6px] flex items-center justify-end pr-1"
+                  className="week-row-height flex items-center justify-end pr-1"
                   style={{
-                    marginBottom: isGroupEnd ? '8px' : '1px'
+                    marginBottom: isGroupEnd ? '8px' : '2px'
                   }}
                 >
                   {year % 10 === 0 && (
@@ -171,15 +171,15 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
             })}
           </div>
 
-          {/* Weeks grid - rendered by year groups */}
-          <div className="flex flex-col">
+          {/* Weeks grid - rendered by year groups, responsive */}
+          <div className="flex flex-col flex-1">
             {yearGroups.map((yearWeeks, yearIndex) => {
               const isGroupEnd = (yearIndex + 1) % YEARS_PER_GROUP === 0 && yearIndex < TOTAL_YEARS - 1;
 
               return (
                 <div
                   key={yearIndex}
-                  className="flex gap-[2px]"
+                  className="grid grid-cols-52 gap-[2px]"
                   style={{ marginBottom: isGroupEnd ? '8px' : '2px' }}
                 >
                   {yearWeeks.map((week) => {
@@ -199,7 +199,7 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
                         transition={!hasAnimated ? { delay: baseDelay, duration: 0.3, ease: 'easeOut' } : undefined}
                         className={`
                           week-cell
-                          w-[5px] h-[5px] md:w-[6px] md:h-[6px]
+                          aspect-square
                           cursor-pointer
                           ${isSelected ? 'ring-2 ring-gold ring-offset-1 ring-offset-cream' : ''}
                           ${week.isLived
