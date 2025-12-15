@@ -225,31 +225,53 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
         </div>
       </div>
 
-      {/* Tooltip - now shows on click/tap always */}
+      {/* Tooltip - mobile: fixed bottom modal, desktop: positioned near cell */}
       <AnimatePresence>
         {tooltip && (
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5 }}
-            className="tooltip"
-            style={{
-              left: tooltip.x,
-              top: tooltip.y,
-              transform: 'translate(-50%, -100%)',
-            }}
-          >
-            {/* Close button */}
-            <button
-              onClick={handleCloseTooltip}
-              className="absolute -top-2 -right-2 w-6 h-6 bg-gray-dark rounded-full flex items-center justify-center text-cream hover:bg-dark transition-colors"
+          <>
+            {/* Mobile: Bottom sheet modal */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-dark text-cream rounded-t-2xl shadow-2xl p-4 pb-8 mx-2 mb-2 rounded-2xl"
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <WeekTooltip week={tooltip.week} birthDate={birthDate} />
-          </motion.div>
+              {/* Close button */}
+              <button
+                onClick={handleCloseTooltip}
+                className="absolute top-3 right-3 w-8 h-8 bg-gray-dark/50 rounded-full flex items-center justify-center text-cream hover:bg-gray-dark transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <WeekTooltip week={tooltip.week} birthDate={birthDate} />
+            </motion.div>
+
+            {/* Desktop: Positioned tooltip */}
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 5 }}
+              className="tooltip hidden md:block"
+              style={{
+                left: Math.max(100, Math.min(tooltip.x, (gridRef.current?.offsetWidth || 400) - 100)),
+                top: tooltip.y,
+                transform: 'translate(-50%, -100%)',
+              }}
+            >
+              {/* Close button */}
+              <button
+                onClick={handleCloseTooltip}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-gray-dark rounded-full flex items-center justify-center text-cream hover:bg-dark transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <WeekTooltip week={tooltip.week} birthDate={birthDate} />
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
