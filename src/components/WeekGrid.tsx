@@ -97,10 +97,35 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
     const gridRect = gridRef.current?.getBoundingClientRect();
 
     if (gridRect) {
+      let x = rect.left - gridRect.left + rect.width / 2;
+      let y = rect.top - gridRect.top - 10;
+
+      // Ensure tooltip stays within viewport
+      if (typeof window !== 'undefined') {
+        const margin = 10;
+        const tooltipWidth = 320;
+
+        // Check horizontal bounds
+        const leftBound = margin;
+        const rightBound = window.innerWidth - margin;
+
+        // Adjust x if tooltip would overflow
+        if (x - tooltipWidth / 2 < leftBound) {
+          x = leftBound + tooltipWidth / 2;
+        } else if (x + tooltipWidth / 2 > rightBound) {
+          x = rightBound - tooltipWidth / 2;
+        }
+
+        // Adjust y if tooltip would overflow top
+        if (y < margin + 100) {
+          y = rect.top - gridRect.top + rect.height + 10;
+        }
+      }
+
       setTooltip({
         week,
-        x: rect.left - gridRect.left + rect.width / 2,
-        y: rect.top - gridRect.top - 10,
+        x,
+        y,
       });
     }
   }, []);
@@ -125,10 +150,37 @@ export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
       if (tooltip?.week.weekNumber === week.weekNumber) {
         setTooltip(null);
       } else {
+        // Calculate initial position
+        let x = rect.left - gridRect.left + rect.width / 2;
+        let y = rect.top - gridRect.top - 10;
+
+        // On mobile, ensure tooltip stays within viewport with generous margins
+        if (typeof window !== 'undefined') {
+          const isMobile = window.innerWidth < 768;
+          const margin = isMobile ? 16 : 10; // Generous margin on mobile
+          const tooltipWidth = isMobile ? Math.min(280, window.innerWidth - margin * 2) : 320;
+
+          // Check horizontal bounds
+          const leftBound = margin;
+          const rightBound = window.innerWidth - margin;
+
+          // Adjust x if tooltip would overflow
+          if (x - tooltipWidth / 2 < leftBound) {
+            x = leftBound + tooltipWidth / 2;
+          } else if (x + tooltipWidth / 2 > rightBound) {
+            x = rightBound - tooltipWidth / 2;
+          }
+
+          // Adjust y if tooltip would overflow top
+          if (y < margin + 100) { // 100px estimated tooltip height
+            y = rect.top - gridRect.top + rect.height + 10; // Show below instead
+          }
+        }
+
         setTooltip({
           week,
-          x: rect.left - gridRect.left + rect.width / 2,
-          y: rect.top - gridRect.top - 10,
+          x,
+          y,
         });
       }
     }

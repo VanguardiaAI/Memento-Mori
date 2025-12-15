@@ -82,7 +82,7 @@ export function MomentModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop bg-dark/50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 modal-backdrop bg-dark/50"
           onClick={handleClose}
         >
           <motion.div
@@ -90,10 +90,10 @@ export function MomentModal({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-cream rounded-xl shadow-xl overflow-hidden"
+            className="w-full max-w-md bg-cream rounded-xl shadow-xl overflow-hidden max-h-[calc(100vh-32px)] md:max-h-[90vh] flex flex-col"
           >
             {/* Header */}
-            <div className="p-4 border-b border-gray-subtle flex items-center justify-between">
+            <div className="p-4 border-b border-gray-subtle flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-display text-dark tracking-wide">
                 Momentos especiales
               </h2>
@@ -108,7 +108,7 @@ export function MomentModal({
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-subtle">
+            <div className="flex border-b border-gray-subtle flex-shrink-0">
               <button
                 onClick={() => setView('add')}
                 className={`flex-1 py-2 text-sm font-medium transition-colors ${
@@ -128,7 +128,7 @@ export function MomentModal({
             </div>
 
             {/* Content */}
-            <div className="p-4 max-h-[60vh] overflow-y-auto">
+            <div className="p-4 flex-1 overflow-y-auto">
               {view === 'add' ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {!canAddMore && (

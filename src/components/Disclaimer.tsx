@@ -15,7 +15,7 @@ export function Disclaimer({ isOpen, onClose }: DisclaimerProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop bg-dark/50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 modal-backdrop bg-dark/50"
           onClick={onClose}
         >
           <motion.div
@@ -23,10 +23,10 @@ export function Disclaimer({ isOpen, onClose }: DisclaimerProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-cream rounded-xl shadow-xl overflow-hidden"
+            className="w-full max-w-md bg-cream rounded-xl shadow-xl overflow-hidden max-h-[calc(100vh-32px)] md:max-h-[90vh] flex flex-col"
           >
             {/* Header */}
-            <div className="p-4 border-b border-gray-subtle flex items-center justify-between">
+            <div className="p-4 border-b border-gray-subtle flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-display text-dark tracking-wide">
                 Aviso importante
               </h2>
@@ -41,7 +41,7 @@ export function Disclaimer({ isOpen, onClose }: DisclaimerProps) {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
               <p className="text-gray-dark">
                 Esta herramienta es una reflexión sobre el tiempo y la finitud de la vida.
                 No pretende ser una predicción ni un cálculo exacto de esperanza de vida.
