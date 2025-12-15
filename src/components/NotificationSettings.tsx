@@ -55,8 +55,8 @@ export function NotificationSettings({
     }
   }, [onUpdate]);
 
-  const sendTestNotification = useCallback(() => {
-    // Verificar directamente con la API del navegador, no con el estado de React
+  const sendTestNotification = useCallback(async () => {
+    // Verificar directamente con la API del navegador
     if (typeof window === 'undefined' || !('Notification' in window)) {
       console.error('Notificaciones no soportadas en este navegador');
       return;
@@ -66,29 +66,49 @@ export function NotificationSettings({
     const currentPermission = Notification.permission;
     if (currentPermission !== 'granted') {
       console.error('Permiso de notificación no otorgado:', currentPermission);
-      // Actualizar el estado por si estaba desactualizado
       setNotificationPermission(currentPermission);
       return;
     }
 
-    try {
-      const notification = new Notification('Memento Mori', {
-        body: `Semana ${weeksLived + 1} de 4,160. Te quedan ${weeksRemaining} semanas para los 80.`,
-        icon: '/icon-192x192.png',
-        badge: '/icon-192x192.png',
-        tag: 'memento-mori-test',
-      });
+    const notificationOptions = {
+      body: `Semana ${weeksLived + 1} de 4,160. Te quedan ${weeksRemaining} semanas para los 80.`,
+      icon: '/icon-192x192.png',
+      badge: '/icon-192x192.png',
+      tag: 'memento-mori-test',
+    };
 
+    try {
+      // Intentar usar Service Worker primero (requerido en Android)
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification('Memento Mori', notificationOptions);
+        setShowTestNotification(true);
+        setTimeout(() => setShowTestNotification(false), 3000);
+        return;
+      }
+
+      // Fallback para navegadores de escritorio sin SW activo
+      const notification = new Notification('Memento Mori', notificationOptions);
       notification.onclick = () => {
         window.focus();
         notification.close();
       };
-
       setShowTestNotification(true);
       setTimeout(() => setShowTestNotification(false), 3000);
     } catch (error) {
       console.error('Error al enviar notificación de prueba:', error);
-      // Mostrar feedback visual aunque haya error
+
+      // Fallback: intentar con Notification directa si SW falló
+      try {
+        const notification = new Notification('Memento Mori', notificationOptions);
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+      } catch {
+        // Ignorar si también falla
+      }
+
       setShowTestNotification(true);
       setTimeout(() => setShowTestNotification(false), 3000);
     }
