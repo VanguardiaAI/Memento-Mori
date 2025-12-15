@@ -26,8 +26,9 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Mark animation as complete after initial load
+  // La animación usa easing exponencial (2.5s max) + duración de transición (0.15s)
   useEffect(() => {
-    const timer = setTimeout(() => setHasAnimated(true), 2000);
+    const timer = setTimeout(() => setHasAnimated(true), 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -183,15 +184,19 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
                 >
                   {yearWeeks.map((week) => {
                     const isMoment = !!week.moment;
-                    const baseDelay = hasAnimated ? 0 : Math.min(week.weekNumber / weeksLived, 1) * 1.5;
+                    // Easing exponencial: empieza lento y acelera progresivamente
+                    // Como el tiempo en la vida - pasa lento de joven, rápido de mayor
+                    const progress = week.weekNumber / weeksLived;
+                    const easedProgress = Math.pow(Math.min(progress, 1), 0.4);
+                    const baseDelay = hasAnimated ? 0 : easedProgress * 2.5;
                     const isSelected = tooltip?.week.weekNumber === week.weekNumber;
 
                     return (
                       <motion.div
                         key={week.weekNumber}
-                        initial={!hasAnimated && week.isLived ? { backgroundColor: 'transparent' } : undefined}
+                        initial={!hasAnimated && week.isLived ? { backgroundColor: '#8a8578' } : undefined}
                         animate={week.isLived ? { backgroundColor: isMoment ? '#c9a227' : '#1a1a1a' } : undefined}
-                        transition={!hasAnimated ? { delay: baseDelay, duration: 0.1 } : undefined}
+                        transition={!hasAnimated ? { delay: baseDelay, duration: 0.15, ease: 'easeOut' } : undefined}
                         className={`
                           week-cell
                           w-[5px] h-[5px] md:w-[6px] md:h-[6px]
