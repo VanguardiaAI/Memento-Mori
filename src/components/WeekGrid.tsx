@@ -2,13 +2,12 @@
 
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Moment, WeekInfo, ViewMode } from '@/types';
+import type { Moment, WeekInfo } from '@/types';
 import { TOTAL_YEARS, WEEKS_PER_YEAR, TOTAL_WEEKS, getWeekInfo, weekNumberToAge, formatDate, getWeeksAgo, getMomentStats, formatTimeAgo, formatWeekOfMonth } from '@/utils/dateCalculations';
 
 interface WeekGridProps {
   birthDate: string;
   moments: Moment[];
-  viewMode: ViewMode;
   onWeekClick?: (week: WeekInfo) => void;
 }
 
@@ -20,7 +19,7 @@ interface TooltipData {
 
 const YEARS_PER_GROUP = 10; // Separación cada 10 años
 
-export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGridProps) {
+export function WeekGrid({ birthDate, moments, onWeekClick }: WeekGridProps) {
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -81,9 +80,10 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
     return groups;
   }, [weeksData]);
 
-  // Show tooltip on hover (only in perspective mode)
+  // Show tooltip on hover (desktop)
   const handleWeekHover = useCallback((week: WeekInfo, event: React.MouseEvent) => {
-    if (viewMode !== 'perspective') return;
+    // Don't show tooltip on hover if user is on touch device (will use tap instead)
+    if ('ontouchstart' in window) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
     const gridRect = gridRef.current?.getBoundingClientRect();
@@ -95,13 +95,14 @@ export function WeekGrid({ birthDate, moments, viewMode, onWeekClick }: WeekGrid
         y: rect.top - gridRect.top - 10,
       });
     }
-  }, [viewMode]);
+  }, []);
 
   const handleWeekLeave = useCallback(() => {
-    if (viewMode === 'perspective') {
+    // Only clear tooltip on desktop hover
+    if (!('ontouchstart' in window)) {
       setTooltip(null);
     }
-  }, [viewMode]);
+  }, []);
 
   // Show tooltip on click/tap (always works)
   const handleWeekClick = useCallback((week: WeekInfo, event: React.MouseEvent | React.TouchEvent) => {
