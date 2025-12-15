@@ -1,6 +1,8 @@
 import {
   differenceInWeeks,
   differenceInYears,
+  differenceInMonths,
+  differenceInDays,
   addWeeks,
   addYears,
   startOfWeek,
@@ -129,4 +131,95 @@ export function getWeeksAgo(weekNumber: number, birthDateString: string): number
   const now = new Date();
   const currentWeekNumber = differenceInWeeks(now, birthDate) + 1;
   return currentWeekNumber - weekNumber;
+}
+
+export interface MomentStats {
+  // Tiempo transcurrido desde el momento
+  yearsAgo: number;
+  monthsAgo: number;
+  weeksAgo: number;
+  daysAgo: number;
+
+  // Semanas en ese momento vs ahora
+  weeksLivedThen: number;
+  weeksLivedNow: number;
+  weeksSinceMoment: number;
+
+  // Porcentajes de vida
+  percentageOfLifeThen: number;
+  percentageOfLifeNow: number;
+
+  // Edad en el momento
+  ageAtMoment: { years: number; months: number };
+
+  // Datos curiosos
+  percentageOfLifeSinceMoment: number; // qué % de tu vida ha pasado desde ese momento
+  timesLivedSinceThen: number; // cuántas veces has vivido esa cantidad de tiempo desde entonces
+}
+
+export function getMomentStats(momentDate: string, birthDateString: string): MomentStats {
+  const birthDate = parseISO(birthDateString);
+  const momentDateParsed = parseISO(momentDate);
+  const now = new Date();
+
+  // Tiempo transcurrido desde el momento
+  const yearsAgo = differenceInYears(now, momentDateParsed);
+  const monthsAgo = differenceInMonths(now, momentDateParsed);
+  const weeksAgo = differenceInWeeks(now, momentDateParsed);
+  const daysAgo = differenceInDays(now, momentDateParsed);
+
+  // Semanas vividas entonces y ahora
+  const weeksLivedThen = differenceInWeeks(momentDateParsed, birthDate);
+  const weeksLivedNow = differenceInWeeks(now, birthDate);
+  const weeksSinceMoment = weeksLivedNow - weeksLivedThen;
+
+  // Porcentajes de vida (de 4160 semanas)
+  const percentageOfLifeThen = (weeksLivedThen / TOTAL_WEEKS) * 100;
+  const percentageOfLifeNow = (weeksLivedNow / TOTAL_WEEKS) * 100;
+
+  // Edad en el momento
+  const yearsAtMoment = differenceInYears(momentDateParsed, birthDate);
+  const monthsAtMoment = differenceInMonths(momentDateParsed, birthDate) % 12;
+
+  // Qué porcentaje de tu vida total ha transcurrido desde ese momento
+  const percentageOfLifeSinceMoment = (weeksSinceMoment / TOTAL_WEEKS) * 100;
+
+  // Cuántas veces has vivido esa cantidad de tiempo desde entonces
+  // (si tenías 10 años y han pasado 20, has vivido 2x ese tiempo)
+  const timesLivedSinceThen = weeksLivedThen > 0 ? weeksSinceMoment / weeksLivedThen : 0;
+
+  return {
+    yearsAgo,
+    monthsAgo,
+    weeksAgo,
+    daysAgo,
+    weeksLivedThen,
+    weeksLivedNow,
+    weeksSinceMoment,
+    percentageOfLifeThen,
+    percentageOfLifeNow,
+    ageAtMoment: { years: yearsAtMoment, months: monthsAtMoment },
+    percentageOfLifeSinceMoment,
+    timesLivedSinceThen,
+  };
+}
+
+export function formatTimeAgo(weeksAgo: number): string {
+  if (weeksAgo < 4) {
+    return `hace ${weeksAgo} semana${weeksAgo !== 1 ? 's' : ''}`;
+  }
+
+  const months = Math.floor(weeksAgo / 4.33);
+  if (months < 12) {
+    return `hace ${months} mes${months !== 1 ? 'es' : ''}`;
+  }
+
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+
+  if (remainingMonths === 0) {
+    return `hace ${years} año${years !== 1 ? 's' : ''}`;
+  }
+
+  return `hace ${years} año${years !== 1 ? 's' : ''} y ${remainingMonths} mes${remainingMonths !== 1 ? 'es' : ''}`;
 }

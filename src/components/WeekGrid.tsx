@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Moment, WeekInfo, ViewMode } from '@/types';
-import { TOTAL_YEARS, WEEKS_PER_YEAR, TOTAL_WEEKS, getWeekInfo, weekNumberToAge, formatDate, getWeeksAgo } from '@/utils/dateCalculations';
+import { TOTAL_YEARS, WEEKS_PER_YEAR, TOTAL_WEEKS, getWeekInfo, weekNumberToAge, formatDate, getWeeksAgo, getMomentStats, formatTimeAgo } from '@/utils/dateCalculations';
 
 interface WeekGridProps {
   birthDate: string;
@@ -193,9 +193,68 @@ function WeekTooltip({ week, birthDate }: WeekTooltipProps) {
   const { years, weeks } = weekNumberToAge(week.weekNumber);
   const weeksAgo = getWeeksAgo(week.weekNumber, birthDate);
 
+  // Si hay un momento, calcular estadísticas detalladas
+  const momentStats = week.moment ? getMomentStats(week.moment.date, birthDate) : null;
+
+  // Si es un momento especial, mostrar tooltip enriquecido
+  if (week.moment && momentStats) {
+    return (
+      <div className="text-center max-w-[280px]">
+        {/* Nombre del momento */}
+        <div className="text-gold-light font-medium text-base mb-1">
+          {week.moment.name}
+        </div>
+        <div className="text-xs opacity-70 mb-3">
+          {formatDate(new Date(week.moment.date))}
+        </div>
+
+        {/* Tiempo transcurrido */}
+        <div className="bg-cream/10 rounded px-2 py-1.5 mb-2">
+          <div className="text-sm font-medium">
+            {formatTimeAgo(momentStats.weeksAgo)}
+          </div>
+          <div className="text-xs opacity-70">
+            {momentStats.weeksSinceMoment.toLocaleString('es-ES')} semanas desde entonces
+          </div>
+        </div>
+
+        {/* Comparativa entonces vs ahora */}
+        <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+          <div className="bg-cream/10 rounded p-1.5">
+            <div className="opacity-60">Entonces</div>
+            <div className="font-medium">{momentStats.weeksLivedThen.toLocaleString('es-ES')} sem</div>
+            <div className="opacity-60">{momentStats.percentageOfLifeThen.toFixed(1)}% de vida</div>
+          </div>
+          <div className="bg-cream/10 rounded p-1.5">
+            <div className="opacity-60">Ahora</div>
+            <div className="font-medium">{momentStats.weeksLivedNow.toLocaleString('es-ES')} sem</div>
+            <div className="opacity-60">{momentStats.percentageOfLifeNow.toFixed(1)}% de vida</div>
+          </div>
+        </div>
+
+        {/* Edad en el momento */}
+        <div className="text-xs opacity-80 mb-2">
+          Tenías {momentStats.ageAtMoment.years} años
+          {momentStats.ageAtMoment.months > 0 ? ` y ${momentStats.ageAtMoment.months} meses` : ''}
+        </div>
+
+        {/* Dato curioso */}
+        {momentStats.timesLivedSinceThen >= 0.1 && (
+          <div className="text-xs italic opacity-70 border-t border-cream/20 pt-2">
+            {momentStats.timesLivedSinceThen >= 1
+              ? `Has vivido ${momentStats.timesLivedSinceThen.toFixed(1)}x el tiempo que tenías entonces`
+              : `El ${(momentStats.percentageOfLifeSinceMoment).toFixed(1)}% de tu vida ha pasado desde este momento`
+            }
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Tooltip normal para semanas sin momento
   return (
     <div className="text-center">
-      <div className="font-medium">Semana {week.weekNumber} de 4,160</div>
+      <div className="font-medium">Semana {week.weekNumber.toLocaleString('es-ES')} de 4,160</div>
       <div className="text-xs opacity-80">
         Año {week.year} · Semana {week.weekOfYear}
       </div>
@@ -204,13 +263,7 @@ function WeekTooltip({ week, birthDate }: WeekTooltipProps) {
       </div>
       {week.isLived && weeksAgo > 0 && (
         <div className="text-xs opacity-60 mt-1">
-          Hace {weeksAgo} semanas
-        </div>
-      )}
-      {week.moment && (
-        <div className="mt-2 pt-2 border-t border-cream/30">
-          <div className="text-gold-light font-medium">{week.moment.name}</div>
-          <div className="text-xs opacity-80">{formatDate(new Date(week.moment.date))}</div>
+          {formatTimeAgo(weeksAgo)}
         </div>
       )}
       {week.isCurrent && (
